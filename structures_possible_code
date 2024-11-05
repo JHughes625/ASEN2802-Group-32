@@ -1,0 +1,75 @@
+% This is what I have so far for the structures part and I cant figure out where I'm wrong
+
+clc;
+clear;
+close all;
+
+
+function [result_forces, x_centroids] = discretizeLoad(loadFunc, N, L, omega0, omega1)
+
+% load_func -> a handle to the distributed load function
+% N -> number of segments for discretization 
+% L -> length of the beam (m)
+% omega0 -> load parameter
+% omega1 -> load parameter
+
+% step size for discretization 
+dx = L / N;
+
+% initalize results vectors
+result_forces = zeros(N, 1);
+x_centroids = zeros(N, 1);
+
+% loop through 
+    for i = 1:N
+        % define limits
+        x0 = (i-1) * dx;
+        x1 = i * dx;
+
+        % load values at boundaries
+        f0 = loadFunc(x0, L, omega0, omega1);
+        f1 = loadFunc(x1, L, omega0, omega1);
+
+        % resultant force 
+        result_forces(i) = 0.5 * (f0 + f1) * dx;
+
+        % centroid 
+        x_centroids(i) = (x0 + x1) / 2;
+    end
+
+
+end
+
+loadFuncRectangle = @(x, L, omega0, omega1) omega0;
+
+loadFuncTriangle = @(x, L, omega0, omega1) (-omega0 / L) * x + omega0;
+
+loadFuncTrapizod = @(x, L, omega0, omega1) ((omega1 -omega0) / L) * x + omega0;
+
+
+[result_forces, x_centriods] = discretizeLoad(loadFuncTrapizod, 4, 10, 10, 5);
+
+Fr1 = result_forces(1);
+Fr2 = result_forces(2);
+Fr3 = result_forces(3);
+Fr4 = result_forces(4);
+
+x1 = x_centriods(1);
+x2 = x_centriods(2);
+x3 = x_centriods(3);
+x4 = x_centriods(4);
+
+A = [1, 1, 1, 0, -1, 0;
+     0, 0, 1, 1, 0, 0;
+     0, 0, 0, 0, 1, 1;
+     (Fr1 + Fr2), -(Fr2 + Fr4), 0, 0, 0, 0;
+     0, 0, Fr1, -Fr2, 0, 0;
+     0, 0, 0, 0, Fr3, -Fr4];
+
+
+     
+B = [(x4 - x1), (x2 - x1), (x4 - x3), 0, 0, 0];
+
+x = A / B;
+
+display(x);
